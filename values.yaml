@@ -6,9 +6,17 @@ replicaCount: 1
 
 image:
   repository: nginx
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
+
+container:
+  port: 80
+  probe:
+    liveness:
+      path: /
+    readiness:
+      path: /
 
 imagePullSecrets: []
 nameOverride: ""
@@ -77,3 +85,14 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+configmap: {}
+
+secrets: 
+  - name: mysecret # name of the secret
+    key: db_password # key to select in the secret. If set to '*', takes all the values
+    alias: DB_PASSWORD # alias to the secret key. Default to secret key
+  - name: mysecret 
+    key: SECRET_ENV 
+  - name: othersecret
+    key: "*"

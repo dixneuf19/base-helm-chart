@@ -35,18 +35,42 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: 80
+              containerPort: {{ .Values.container.port }}
               protocol: TCP
           livenessProbe:
             httpGet:
-              path: /
+              path: {{ .Values.container.probe.liveness.path }}
               port: http
           readinessProbe:
             httpGet:
-              path: /
+              path: {{ .Values.container.probe.readiness.path }}
               port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          env: 
+          {{- if empty .Values.secrets }}
+            []
+          {{- else }}
+            {{- range .Values.secrets }}
+              {{- if eq .key "*" | not }}
+          - name: {{ .alias | default .key }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .name }}
+                key: {{ .key }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+          envFrom:
+          - configMapRef:
+              name: {{ include "base-helm-chart.fullname" . }}
+              optional: false
+          {{- range .Values.secrets }}
+            {{- if eq .key "*"}}
+          - secretKeyRef:
+              name: {{ .name }}
+            {{- end }}
+          {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
